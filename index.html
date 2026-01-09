@@ -1,171 +1,353 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Колесо фортуны</title>
-<style>
-body {
-    margin:0;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    background:#111;
-    color:#fff;
-    font-family:Arial;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fortune Wheel Timer</title>
+    <style>
+        :root {
+            --primary: #ff1744;
+            --secondary: #00ff88;
+            --bg: #0f0f1e;
+            --glass: rgba(255, 255, 255, 0.07);
+            --border: rgba(255, 255, 255, 0.15);
+        }
 
-.container {
-    text-align:center;
-}
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-.stats {
-    display:flex;
-    justify-content:space-between;
-    width:300px;
-    margin:0 auto 10px;
-    font-size:18px;
-}
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at center, #1a1a3a 0%, #0f0f1e 100%);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            color: #fff;
+            overflow: hidden;
+        }
 
-.wheel-wrapper {
-    position:relative;
-    width:300px;
-    height:300px;
-    margin:10px auto;
-}
+        .header-stats {
+            width: 100%;
+            padding: 20px 15px;
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border);
+            position: fixed;
+            top: 0;
+            z-index: 100;
+        }
 
-.wheel {
-    width:100%;
-    height:100%;
-    border-radius:50%;
-    border:5px solid #fff;
-    position:relative;
-    transition:transform 4s cubic-bezier(.17,.67,.12,1);
-}
+        .stat-card {
+            flex: 1;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
 
-.arrow {
-    position:absolute;
-    top:-15px;
-    left:50%;
-    transform:translateX(-50%);
-    width:0;
-    height:0;
-    border-left:10px solid transparent;
-    border-right:10px solid transparent;
-    border-bottom:20px solid red;
-    z-index:10;
-}
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            margin-bottom: 4px;
+        }
 
-.sector {
-    position:absolute;
-    width:50%;
-    height:50%;
-    top:50%;
-    left:50%;
-    transform-origin:0% 0%;
-    clip-path:polygon(0 0, 100% 0, 0 100%);
-}
+        .stat-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--secondary);
+        }
 
-button {
-    padding:10px 30px;
-    font-size:18px;
-    cursor:pointer;
-}
-</style>
+        .main-container {
+            margin-top: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            width: 100%;
+            gap: 30px;
+        }
+
+        .wheel-box {
+            --size: clamp(280px, 85vmin, 450px);
+            position: relative;
+            width: var(--size);
+            height: var(--size);
+        }
+
+        .spinner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            transition: transform 5s cubic-bezier(0.1, 0, 0, 1);
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            border: 8px solid #2a2a4a;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .spinner::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 50%;
+            z-index: 5;
+            border: 4px solid #2a2a4a;
+        }
+
+        .ticker {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 35px solid var(--primary);
+            z-index: 10;
+            transform: translateX(-50%);
+        }
+
+        .prize {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 40px;
+            margin-top: -20px;
+            transform-origin: left center;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 25px;
+            font-weight: 900;
+            font-size: calc(var(--size) / 16);
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .bottom-ui {
+            width: 100%;
+            padding: 0 20px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .result {
+            font-size: 24px;
+            font-weight: 800;
+            min-height: 32px;
+            color: var(--secondary);
+        }
+
+        .btn-spin {
+            width: 100%;
+            max-width: 300px;
+            background: linear-gradient(135deg, #ff1744 0%, #d32f2f 100%);
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .btn-spin:disabled {
+            background: #333;
+            opacity: 0.8;
+            font-size: 16px;
+        }
+    </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="stats">
-        <div>Попытки: <span id="tries">0</span></div>
-        <div>Баланс: <span id="balance">0</span></div>
+    <div class="header-stats">
+        <div class="stat-card">
+            <div class="stat-label">Попытки</div>
+            <div class="stat-value" id="spins">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Баланс</div>
+            <div class="stat-value" id="balance">0</div>
+        </div>
     </div>
 
-    <div class="wheel-wrapper">
-        <div class="arrow"></div>
-        <div class="wheel" id="wheel"></div>
+    <div class="main-container">
+        <div class="wheel-box">
+            <div class="ticker"></div>
+            <ul class="spinner" id="spinner"></ul>
+        </div>
+
+        <div class="bottom-ui">
+            <div class="result" id="result"></div>
+            <button class="btn-spin" id="spin-btn">ЗАГРУЗКА...</button>
+        </div>
     </div>
 
-    <button onclick="spin()">Крутить</button>
-    <h3 id="result"></h3>
-</div>
+    <script>
+        const COOLDOWN_HOURS = 8;
+        const COOLDOWN_MS = COOLDOWN_HOURS * 60 * 60 * 1000;
 
-<script>
-const prizes = [
-    { value: 5000, chance: 0.00001 },
-    { value: 2000, chance: 0.0001 },
-    { value: 1500, chance: 0.001 },
-    { value: 1000, chance: 0.01 },
-    { value: 500, chance: 0.1 },
-    { value: 300, chance: 1 },
-    { value: 200, chance: 3 },
-    { value: 100, chance: 0.88888 },
-    { value: 50, chance: 20 },
-    { value: 0, chance: 75 }
-];
+        const prizeConfig = [
+            { value: 0, count: 13, color: "#2b2b4a" },
+            { value: 50, count: 6, color: "#ff5722" },
+            { value: 5000, count: 1, color: "#ffc107" },
+            { value: 2000, count: 1, color: "#4caf50" },
+            { value: 1500, count: 1, color: "#009688" },
+            { value: 1000, count: 1, color: "#00bcd4" },
+            { value: 500, count: 1, color: "#2196f3" },
+            { value: 300, count: 2, color: "#3f51b5" },
+            { value: 200, count: 3, color: "#673ab7" },
+            { value: 100, count: 3, color: "#9c27b0" }
+        ];
 
-const wheel = document.getElementById("wheel");
-const result = document.getElementById("result");
-const triesEl = document.getElementById("tries");
-const balanceEl = document.getElementById("balance");
+        const prizes = [];
+        prizeConfig.forEach(p => {
+            for (let i = 0; i < p.count; i++) prizes.push(p);
+        });
 
-const angle = 360 / prizes.length;
-let currentRotation = 0;
-let tries = 0;
-let balance = 0;
-let spinning = false;
+        const numSectors = prizes.length;
+        const step = 360 / numSectors;
+        const spinner = document.getElementById('spinner');
+        const btn = id => document.getElementById(id);
+        
+        let currentRotation = 0;
+        let state = { 
+            balance: 0,
+            lastSpinTime: 0,
+            userId: "guest"
+        };
 
-// Рисуем колесо
-prizes.forEach((p, i) => {
-    const s = document.createElement("div");
-    s.className = "sector";
-    s.style.background = `hsl(${i*36},70%,50%)`;
-    s.style.transform = `rotate(${i*angle}deg) skewY(${90-angle}deg)`;
-    s.innerHTML = `<span style="
-        position:absolute;
-        transform:skewY(${-(90-angle)}deg) rotate(${angle/2}deg);
-        top:10px;
-        left:10px;
-        font-size:14px;
-    ">${p.value}</span>`;
-    wheel.appendChild(s);
-});
+        if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.expand();
+            state.userId = window.Telegram.WebApp.initDataUnsafe?.user?.id || "guest";
+        }
 
-// Выбор по вероятностям
-function getPrizeIndex() {
-    const r = Math.random() * 100;
-    let sum = 0;
+        function loadUserData() {
+            const saved = localStorage.getItem(`wheel_v2_${state.userId}`);
+            if (saved) {
+                const data = JSON.parse(saved);
+                state.balance = data.balance || 0;
+                state.lastSpinTime = data.lastSpinTime || 0;
+            }
+        }
 
-    for (let i = 0; i < prizes.length; i++) {
-        sum += prizes[i].chance;
-        if (r <= sum) return i;
-    }
-    return prizes.length - 1;
-}
+        function saveUserData() {
+            localStorage.setItem(`wheel_v2_${state.userId}`, JSON.stringify({
+                balance: state.balance,
+                lastSpinTime: state.lastSpinTime
+            }));
+        }
 
-function spin() {
-    if (spinning) return;
-    spinning = true;
+        function updateDisplay() {
+            const now = Date.now();
+            const timePassed = now - state.lastSpinTime;
+            const timeLeft = COOLDOWN_MS - timePassed;
 
-    tries++;
-    triesEl.textContent = tries;
+            btn('balance').textContent = state.balance;
 
-    const index = getPrizeIndex();
-    const spins = 5;
-    const targetAngle = 360 * spins + (360 - index * angle - angle / 2);
+            if (timeLeft <= 0) {
+                btn('spins').textContent = "1";
+                btn('spin-btn').disabled = false;
+                btn('spin-btn').textContent = "КРУТИТЬ";
+            } else {
+                btn('spins').textContent = "0";
+                btn('spin-btn').disabled = true;
+                startCountdown(timeLeft);
+            }
+        }
 
-    currentRotation += targetAngle;
-    wheel.style.transform = `rotate(${currentRotation}deg)`;
+        function startCountdown(ms) {
+            const timerFunc = () => {
+                const now = Date.now();
+                const diff = COOLDOWN_MS - (now - state.lastSpinTime);
+                if (diff <= 0) {
+                    updateDisplay();
+                    clearInterval(window.timerInterval);
+                    return;
+                }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                btn('spin-btn').textContent = `ЧЕРЕЗ ${h}ч ${m}м ${s}с`;
+            };
+            clearInterval(window.timerInterval);
+            window.timerInterval = setInterval(timerFunc, 1000);
+            timerFunc();
+        }
 
-    setTimeout(() => {
-        const win = prizes[index].value;
-        balance += win;
-        balanceEl.textContent = balance;
-        result.innerText = `Выпало: ${win}`;
-        spinning = false;
-    }, 4000);
-}
-</script>
+        const setup = () => {
+            let grad = "conic-gradient(";
+            prizes.forEach((p, i) => {
+                grad += `${p.color} ${i * step}deg ${(i + 1) * step}deg${i === numSectors - 1 ? '' : ','}`;
+            });
+            spinner.style.background = grad + ")";
 
+            let currentIndex = 0;
+            prizeConfig.forEach(config => {
+                const midIndex = currentIndex + (config.count / 2);
+                const li = document.createElement('li');
+                li.className = 'prize';
+                li.style.transform = `rotate(${midIndex * step - 90}deg)`; 
+                li.innerHTML = `<span>${config.value || '0'}</span>`;
+                spinner.appendChild(li);
+                currentIndex += config.count;
+            });
+        };
+
+        btn('spin-btn').onclick = () => {
+            const spinBtn = btn('spin-btn');
+            spinBtn.disabled = true;
+            btn('result').textContent = "Удача близко...";
+
+            const extraSpins = (Math.floor(Math.random() * 5) + 7) * 360;
+            const randomOffset = Math.floor(Math.random() * 360);
+            currentRotation += extraSpins + randomOffset;
+            
+            spinner.style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                const actualRotation = currentRotation % 360;
+                let winningIndex = Math.floor((360 - actualRotation) % 360 / step) % numSectors;
+                const prize = prizes[winningIndex];
+                
+                state.balance += prize.value;
+                state.lastSpinTime = Date.now();
+                
+                saveUserData();
+                updateDisplay();
+                
+                btn('result').textContent = prize.value > 0 ? `+${prize.value} ОЧКОВ!` : "НЕ ПОВЕЗЛО";
+                btn('result').style.color = prize.value > 0 ? "#00ff88" : "#ff5252";
+            }, 5000);
+        };
+
+        loadUserData();
+        setup();
+        updateDisplay();
+    </script>
 </body>
 </html>
