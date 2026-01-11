@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fortune Wheel</title>
+    <title>Fortune Wheel Timer</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --primary: #ff1744;
@@ -13,90 +14,174 @@
             --border: rgba(255, 255, 255, 0.15);
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
         body {
-            margin: 0; padding: 0;
-            display: flex; flex-direction: column; align-items: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             min-height: 100vh;
             background: radial-gradient(circle at center, #1a1a3a 0%, #0f0f1e 100%);
             font-family: 'Segoe UI', Roboto, sans-serif;
-            color: #fff; overflow: hidden;
+            color: #fff;
+            overflow: hidden;
         }
 
         .header-stats {
-            width: 100%; padding: 20px 15px;
-            display: flex; justify-content: space-between; gap: 15px;
-            background: var(--glass); backdrop-filter: blur(15px);
+            width: 100%;
+            padding: 20px 15px;
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
             border-bottom: 1px solid var(--border);
-            position: fixed; top: 0; z-index: 100;
+            position: fixed;
+            top: 0;
+            z-index: 100;
         }
 
         .stat-card {
-            flex: 1; padding: 10px;
+            flex: 1;
+            padding: 10px;
             background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px; border: 1px solid var(--border);
+            border-radius: 12px;
+            border: 1px solid var(--border);
             text-align: center;
         }
 
-        .stat-label { font-size: 11px; text-transform: uppercase; opacity: 0.7; margin-bottom: 4px; }
-        .stat-value { font-size: 20px; font-weight: 800; color: var(--secondary); }
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--secondary);
+        }
 
         .main-container {
             margin-top: 120px;
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: center; flex-grow: 1; width: 100%; gap: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            width: 100%;
+            gap: 30px;
         }
 
         .wheel-box {
             --size: clamp(280px, 85vmin, 450px);
-            position: relative; width: var(--size); height: var(--size);
+            position: relative;
+            width: var(--size);
+            height: var(--size);
         }
 
         .spinner {
-            width: 100%; height: 100%; border-radius: 50%;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
             transition: transform 5s cubic-bezier(0.1, 0, 0, 1);
-            list-style: none; padding: 0; margin: 0;
-            border: 8px solid #2a2a4a; box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            position: relative; overflow: hidden;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            border: 8px solid #2a2a4a;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
         }
 
         .spinner::after {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); width: 40px; height: 40px;
-            background: #fff; border-radius: 50%; z-index: 5; border: 4px solid #2a2a4a;
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 50%;
+            z-index: 5;
+            border: 4px solid #2a2a4a;
         }
 
         .ticker {
-            position: absolute; top: -10px; left: 50%; width: 0; height: 0;
-            border-left: 15px solid transparent; border-right: 15px solid transparent;
-            border-top: 35px solid var(--primary); z-index: 10; transform: translateX(-50%);
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 35px solid var(--primary);
+            z-index: 10;
+            transform: translateX(-50%);
         }
 
         .prize {
-            position: absolute; top: 50%; left: 50%; width: 50%; height: 40px;
-            margin-top: -20px; transform-origin: left center;
-            display: flex; align-items: center; justify-content: flex-end;
-            padding-right: 25px; font-weight: 900;
-            font-size: calc(var(--size) / 16); color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 40px;
+            margin-top: -20px;
+            transform-origin: left center;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 25px;
+            font-weight: 900;
+            font-size: calc(var(--size) / 16);
+            color: white;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
         }
 
         .bottom-ui {
-            width: 100%; padding: 0 20px 40px;
-            display: flex; flex-direction: column; align-items: center; gap: 20px;
+            width: 100%;
+            padding: 0 20px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
         }
 
-        .result { font-size: 24px; font-weight: 800; min-height: 32px; color: var(--secondary); }
+        .result {
+            font-size: 24px;
+            font-weight: 800;
+            min-height: 32px;
+            color: var(--secondary);
+            text-align: center;
+        }
 
         .btn-spin {
-            width: 100%; max-width: 300px;
+            width: 100%;
+            max-width: 300px;
             background: linear-gradient(135deg, #ff1744 0%, #d32f2f 100%);
-            color: white; border: none; padding: 20px; border-radius: 16px;
-            font-size: 18px; font-weight: 800; cursor: pointer; text-transform: uppercase;
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
         }
 
-        .btn-spin:disabled { background: #333; opacity: 0.8; }
+        .btn-spin:disabled {
+            background: #333;
+            opacity: 0.8;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -124,10 +209,10 @@
         </div>
     </div>
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        const API_URL = "http://92.38.48.203:8080";
-        const COOLDOWN_MS = 8 * 60 * 60 * 1000;
+        // ИЗМЕНЕНО: Используем IP твоего сервера напрямую
+        const API_URL = "https://collar-weekly-trademark-lance.trycloudflare.com";
+        const COOLDOWN_MS = 2 * 60 * 60 * 1000;
 
         const prizeConfig = [
             { value: 0, count: 13, color: "#2b2b4a" },
@@ -149,34 +234,60 @@
         const step = 360 / numSectors;
         const spinner = document.getElementById('spinner');
         const btn = id => document.getElementById(id);
-        
+
         let currentRotation = 0;
         let state = { balance: 0, lastSpinTime: 0, userId: null };
 
-        // Инициализация Telegram
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.ready();
-            window.Telegram.WebApp.expand();
-            state.userId = window.Telegram.WebApp.initDataUnsafe?.user?.id;
+        const tg = window.Telegram.WebApp;
+
+        function initApp() {
+            tg.ready();
+            tg.expand();
+
+            // Пробуем все варианты получения ID
+            let user = tg.initDataUnsafe?.user;
+
+            // Если объект пустой, пробуем распарсить строку вручную
+            if (!user && tg.initData) {
+                try {
+                    const params = new URLSearchParams(tg.initData);
+                    user = JSON.parse(params.get('user'));
+                } catch(e) { console.error("Parse error", e); }
+            }
+
+            if (user && user.id) {
+                state.userId = user.id;
+                loadUserData();
+            } else {
+                // Если мы здесь, значит Telegram вообще не прислал данные
+                btn('spin-btn').textContent = "ОШИБКА ID";
+                btn('result').textContent = "ЖМИ /START В БОТЕ";
+                btn('spin-btn').disabled = true;
+
+                // Выведем отладочную инфу прямо в результат (временно)
+                btn('result').innerHTML = "DEBUG: " + (tg.initData ? "DATA_OK" : "NO_DATA");
+            }
         }
 
-        // --- СВЯЗЬ С СЕРВЕРОМ ---
         async function loadUserData() {
-            if (!state.userId) return;
             try {
-                const res = await fetch(`${API_URL}/get_user?userId=${state.userId}`);
+                // ИЗМЕНЕНО: Добавлен таймаут для fetch, чтобы быстрее реагировать на ошибку
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                const res = await fetch(`${API_URL}/get_user?userId=${state.userId}`, { signal: controller.signal });
                 const data = await res.json();
                 state.balance = data.balance || 0;
                 state.lastSpinTime = data.lastSpinTime || 0;
                 updateDisplay();
             } catch (e) {
-                console.error("Ошибка API:", e);
-                btn('spin-btn').textContent = "ОШИБКА ПОДКЛЮЧЕНИЯ";
+                btn('result').textContent = "СЕРВЕР НЕДОСТУПЕН";
+                btn('spin-btn').textContent = "ОШИБКА";
+                console.error("Load error:", e);
             }
         }
 
         async function saveUserData() {
-            if (!state.userId) return;
             try {
                 await fetch(`${API_URL}/update_balance`, {
                     method: 'POST',
@@ -187,7 +298,7 @@
                         lastSpinTime: state.lastSpinTime
                     })
                 });
-            } catch (e) { console.error("Ошибка сохранения:", e); }
+            } catch (e) { console.error("Save error", e); }
         }
 
         function updateDisplay() {
@@ -199,7 +310,6 @@
                 btn('spins').textContent = "1";
                 btn('spin-btn').disabled = false;
                 btn('spin-btn').textContent = "КРУТИТЬ";
-                clearInterval(window.timerInterval);
             } else {
                 btn('spins').textContent = "0";
                 btn('spin-btn').disabled = true;
@@ -210,7 +320,11 @@
         function startCountdown(ms) {
             const timerFunc = () => {
                 const diff = COOLDOWN_MS - (Date.now() - state.lastSpinTime);
-                if (diff <= 0) { updateDisplay(); return; }
+                if (diff <= 0) {
+                    updateDisplay();
+                    clearInterval(window.timerInterval);
+                    return;
+                }
                 const h = Math.floor(diff / 3600000);
                 const m = Math.floor((diff % 3600000) / 60000);
                 const s = Math.floor((diff % 60000) / 1000);
@@ -233,40 +347,41 @@
                 const midIndex = currentIndex + (config.count / 2);
                 const li = document.createElement('li');
                 li.className = 'prize';
-                li.style.transform = `rotate(${midIndex * step - 90}deg)`; 
-                li.innerHTML = `<span>${config.value || '💀'}</span>`;
+                li.style.transform = `rotate(${midIndex * step - 90}deg)`;
+                li.innerHTML = `<span>${config.value || '0'}</span>`;
                 spinner.appendChild(li);
                 currentIndex += config.count;
             });
         };
 
-        btn('spin-btn').onclick = async () => {
+        btn('spin-btn').onclick = () => {
             btn('spin-btn').disabled = true;
-            btn('result').textContent = "Крутим...";
+            btn('result').textContent = "УДАЧА БЛИЗКО...";
 
             const extraSpins = (Math.floor(Math.random() * 5) + 7) * 360;
             const randomOffset = Math.floor(Math.random() * 360);
             currentRotation += extraSpins + randomOffset;
+
             spinner.style.transform = `rotate(${currentRotation}deg)`;
 
             setTimeout(async () => {
                 const actualRotation = currentRotation % 360;
                 let winningIndex = Math.floor((360 - actualRotation) % 360 / step) % numSectors;
                 const prize = prizes[winningIndex];
-                
+
                 state.balance += prize.value;
                 state.lastSpinTime = Date.now();
-                
-                btn('result').textContent = prize.value > 0 ? `+${prize.value}` : "0";
-                btn('result').style.color = prize.value > 0 ? "#00ff88" : "#ff5252";
-                
+
                 await saveUserData();
                 updateDisplay();
+
+                btn('result').textContent = prize.value > 0 ? `+${prize.value} ОЧКОВ!` : "НЕ ПОВЕЗЛО";
+                btn('result').style.color = prize.value > 0 ? "#00ff88" : "#ff5252";
             }, 5000);
         };
 
         setup();
-        loadUserData();
+        initApp();
     </script>
 </body>
 </html>
